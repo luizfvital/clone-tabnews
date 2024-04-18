@@ -9,16 +9,31 @@ async function status(request, response) {
   `,
   );
 
-  console.log(res.rows);
+  const databaseVersionResponse = await database.query("SHOW server_version;");
+  const databaseVersion = databaseVersionResponse.rows[0].server_version;
 
-  const databaseVersion = res.rows[0].postgres_version;
+  const databaseMaxConnectionsResponse = await database.query(
+    "SHOW max_connections;",
+  );
+  const databaseMaxConnections =
+    databaseMaxConnectionsResponse.rows[0].max_connections;
+
+  const databaseOpenedConnectionsResult = await database.query(
+    "SELECT count(*)::int FROM pg_stat_activity WHERE datname = 'local_db';",
+  );
+  const databaseOpenedConnections =
+    databaseOpenedConnectionsResult.rows[0].count;
+
+  console.log(databaseOpenedConnectionsResult.rows);
 
   const updatedAt = new Date().toISOString();
   response.status(200).json({
     updated_at: updatedAt,
     dependencies: {
       database: {
-        version: databaseVersion.split(" ")[1],
+        version: databaseVersion,
+        max_connections: parseInt(databaseMaxConnections),
+        opened_connections: databaseOpenedConnections,
       },
     },
   });
