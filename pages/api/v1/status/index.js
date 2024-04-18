@@ -10,9 +10,17 @@ async function status(request, response) {
   );
 
   console.log(res.rows);
+
+  const databaseVersion = res.rows[0].postgres_version;
+
   const updatedAt = new Date().toISOString();
   response.status(200).json({
     updated_at: updatedAt,
+    dependencies: {
+      database: {
+        version: databaseVersion.split(" ")[1],
+      },
+    },
   });
 }
 
